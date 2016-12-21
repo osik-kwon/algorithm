@@ -1,4 +1,3 @@
-/*
 #include "stdafx.h"
 #include <gtest/gtest.h>
 #include <array>
@@ -87,26 +86,26 @@ template <typename Tratis, typename Array>
 diamond::input_type array_to_vector(const Array& array)
 {
 	diamond::input_type input;
-// 	auto& it = array.begin();
-// 	bool dir = true; // true : increase, false : decrease
-// 	size_t col_max = 1;
-// 	for (size_t r = 0; r < Tratis::row; ++r)
-// 	{
-// 		diamond::col_type col;
-//  		for (size_t c = 0; c < col_max; ++c)
-//  		{
-// 			col.push_back(*it);
-// 			it++;
-//  		}
-// 		input.push_back(col);
-// 
-// 		if(dir)
-// 			col_max++;
-// 		else
-// 			col_max--;
-// 		if(col_max == Tratis::col)
-// 			dir = false;
-// 	}
+	// 	auto& it = array.begin();
+	// 	bool dir = true; // true : increase, false : decrease
+	// 	size_t col_max = 1;
+	// 	for (size_t r = 0; r < Tratis::row; ++r)
+	// 	{
+	// 		diamond::col_type col;
+	//  		for (size_t c = 0; c < col_max; ++c)
+	//  		{
+	// 			col.push_back(*it);
+	// 			it++;
+	//  		}
+	// 		input.push_back(col);
+	// 
+	// 		if(dir)
+	// 			col_max++;
+	// 		else
+	// 			col_max--;
+	// 		if(col_max == Tratis::col)
+	// 			dir = false;
+	// 	}
 	auto& it = array.begin();
 	size_t col_max = 1;
 	for (size_t r = 0; r < Tratis::row; ++r)
@@ -186,92 +185,4 @@ int main(int argc, char* argv[])
 {
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
-} 
-*/
-
-#include "stdafx.h"
-#include <iostream>
-#include <vector>
-
-class diamond
-{
-public:
-	typedef int size_type;
-	typedef int value_type;
-	typedef std::vector<value_type> col_type;
-	typedef std::vector<col_type> row_type;
-	typedef row_type input_type;
-	diamond(){}
-	value_type find_path(input_type&& input)
-	{
-		return find_path(input);
-	}
-
-	value_type find_path(const input_type& input)
-	{
-		reset(input);
-		value_type result = find(input, 0, 0);
-		return result;
-	}
-private:
-	static const value_type unmemorized = -1;
-	void reset(const input_type& input)
-	{
-		max_col = input.size() / 2 ;
-		memo.resize(0);
-		memo = input;
-		for (auto& r : memo)
-			for (auto& c : r)
-				c = unmemorized;
-	}
-	const value_type find(const input_type& input, size_type r, size_type c)
-	{
-		if(c < 0 || r >= input.size() || c >= input[r].size() )
-			return 0;
-
-		value_type input_value = input[r][c];
-		if(r == input.size() - 1)
-			return input_value;
-
-		value_type& memo_value = memo[r][c];
-		if(memo_value != unmemorized)
-			return memo_value;
-
-		value_type down = find(input, r+1, c);
-		value_type down_right = r < max_col ? find(input, r+1, c+1) : 0;
-		value_type down_left = r >= max_col ? find(input, r+1, c-1) : 0;
-		memo_value = std::max( std::max(down, down_right), down_left ) + input_value;
-		return memo_value;
-	}
-	input_type memo;
-	size_type max_col;
-};
-
-int main(int argc, char* argv[])
-{
-	using namespace std;
-	size_t case_count, col_size;
-	cin >> case_count;
-	for(int id = 0; id < case_count; id++)
-	{
-		cin >> col_size;
-		diamond tester;
-		diamond::input_type input;
-		size_t row_size = 2 * col_size - 1;
-		for (size_t i = 0; i < row_size; ++i)
-		{
-			diamond::col_type col;
-			col.resize(col_size);
-			input.push_back(col);
-		}
-
-		for(size_t y = 0; y < col_size; y++)
-			for(size_t x = 0; x <= y; x++)
-				cin >> input[y][x];
-		for(size_t y = col_size; y< row_size; y++)
-			for(size_t x = 0; x < 2 * col_size - 1 - y; x++)
-				cin >> input[y][x];
-		cout<<tester.find_path(input)<<endl;
-	}
-	return 0;
 }
