@@ -556,6 +556,193 @@ TEST_F(string_rotation_test, negative_test)
 	EXPECT_EQ(false, tester.check("abacab", "aaabbc"));
 }
 
+class URLify
+{
+public:
+	typedef std::string value_type; 
+	void apply(value_type& input, size_t input_size)
+	{
+		if(input_size == 0)
+			return;
+		auto plain = input.rbegin() + (input.size() - input_size);
+		auto encoded = input.end();
+		for (; plain != input.rend(); ++plain)
+		{
+			--encoded;
+			if(*plain == ' ')
+			{
+				*encoded = '0';
+				--encoded;
+				*encoded = '2';
+				--encoded;
+				*encoded = '%';
+				
+			}
+			else
+				*encoded = *plain;
+		}
+	}
+private:
+};
+
+class URLify_test : public testing::Test
+{
+protected:
+	URLify_test()
+	{}
+	~URLify_test()
+	{}
+	virtual void SetUp()
+	{
+	}
+	virtual void TearDown()
+	{
+	}
+	void test(URLify::value_type&& input, size_t input_size,  URLify::value_type&& expect)
+	{
+		URLify::value_type output = input;
+		URLify tester;
+		tester.apply(output, input_size);
+		EXPECT_EQ(expect, output);
+	}
+private:
+};
+
+TEST_F(URLify_test, simple)
+{
+	test("My John Smith    ", 13, "My%20John%20Smith");
+	test("   ", 1, "%20");
+	test("      ", 2, "%20%20");
+}
+
+class chapter1_test : public testing::Test
+{
+protected:
+	chapter1_test()
+	{}
+	~chapter1_test()
+	{}
+	virtual void SetUp()
+	{
+	}
+	virtual void TearDown()
+	{
+	}
+private:
+};
+
+//Write an algorithm such that if an element in an MxN matrix is 0, its entire row
+//and column are set to 0.
+
+template <size_t m, size_t n, typename T = int>
+class matrix
+{
+public:
+	typedef T value_type;
+	typedef std::array<value_type, n> row_type;
+	typedef std::array<row_type, m> container;
+	matrix()
+	{
+		std::fill(mat.begin(), mat.end(), 0);
+	}
+
+	matrix(const container& val) : mat(val)
+	{}
+	void clear_cross(size_t r, size_t c)
+	{
+		if(r >= m || c >= n)
+			return; // TODO: exception
+
+		for (auto& it : mat[r]) // clear row
+			it = 0;
+
+		for (size_t i = 0; i < m; ++i) // clear column
+			mat[i][c] = 0;
+	}
+	row_type& operator [] (size_t r)
+	{
+		return mat[r];
+	}
+private:
+	container mat;
+};
+
+TEST_F(chapter1_test, 1_7)
+{
+	matrix<3,2>::container input =
+	{
+		1, 2,
+		3, 4,
+		5, 6
+	};
+	matrix<3,2> mat(input);
+	mat.clear_cross(1,1);
+	EXPECT_EQ(1, mat[0][0]);
+	EXPECT_EQ(0, mat[0][1]);
+	EXPECT_EQ(0, mat[1][0]);
+	EXPECT_EQ(0, mat[1][1]);
+	EXPECT_EQ(5, mat[2][0]);
+	EXPECT_EQ(0, mat[2][1]);
+	mat.clear_cross(0,0);
+	EXPECT_EQ(0, mat[0][0]);
+	EXPECT_EQ(0, mat[0][1]);
+	EXPECT_EQ(0, mat[1][0]);
+	EXPECT_EQ(0, mat[1][1]);
+	EXPECT_EQ(0, mat[2][0]);
+	EXPECT_EQ(0, mat[2][1]);
+
+	matrix<4,3>::container input2 =
+	{
+		1,	2,	3,
+		4,	5,	6,
+		7,	8,	9,
+		10,	11,	12
+	};
+	matrix<4,3> mat2(input2);
+	mat2.clear_cross(1,1);
+	EXPECT_EQ(1, mat2[0][0]);
+	EXPECT_EQ(0, mat2[0][1]);
+	EXPECT_EQ(3, mat2[0][2]);
+	EXPECT_EQ(0, mat2[1][0]);
+	EXPECT_EQ(0, mat2[1][1]);
+	EXPECT_EQ(0, mat2[1][2]);
+	EXPECT_EQ(7, mat2[2][0]);
+	EXPECT_EQ(0, mat2[2][1]);
+	EXPECT_EQ(9, mat2[2][2]);
+	EXPECT_EQ(10, mat2[3][0]);
+	EXPECT_EQ(0, mat2[3][1]);
+	EXPECT_EQ(12, mat2[3][2]);
+
+}
+
+#include <algorithm>
+// Given two strings, write a method to decide if one is a permutation of the other.
+bool b_is_permutation_of_a(const std::string& a, const std::string& b)
+{
+	if(a.size() != b.size())
+		return false;
+
+	std::string sorted_a = a; // n
+	std::sort(sorted_a.begin(), sorted_a.end()); // n log n
+	
+	std::string sorted_b = b; // n
+	std::sort(sorted_b.begin(), sorted_b.end()); // n log n
+
+	return sorted_a == sorted_b; // n
+}
+
+TEST_F(chapter1_test, 1_3)
+{
+	EXPECT_EQ(true, b_is_permutation_of_a("abcd","acbd"));
+	EXPECT_EQ(true, b_is_permutation_of_a("abcd","dabc"));
+	EXPECT_EQ(true, b_is_permutation_of_a("aaaa","aaaa"));
+	EXPECT_EQ(true, b_is_permutation_of_a("",""));
+	EXPECT_EQ(false, b_is_permutation_of_a("abcd","bcba"));
+	EXPECT_EQ(false, b_is_permutation_of_a("a ","a"));
+	EXPECT_EQ(false, b_is_permutation_of_a("abcd","aabc"));
+	EXPECT_EQ(false, b_is_permutation_of_a("aaaa","aaa"));
+}
+
 int main(int argc, char* argv[])
 {
 	testing::InitGoogleTest(&argc, argv);

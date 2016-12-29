@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include <gtest/gtest.h>
-#include <string>
 
 class chapter2_test : public testing::Test
 {
@@ -30,6 +29,7 @@ public:
 		node(const T& val) : next(nullptr), value(val)
 		{}
 		const T& get() const { return value; }
+		node* get_next() const { return next; }
 	private:
 		node* next;
 		T value;
@@ -207,6 +207,10 @@ public:
 		}
 		return cur;
 	};
+	void make_circular(node* to, node* from)
+	{
+		from->next = to;
+	}
 private:
 	node* head;
 	node* tail;
@@ -348,6 +352,282 @@ TEST_F(chapter2_test, 2_5)
 	int sum = to_integer(result);
 	EXPECT_EQ(912, sum);
 }
+
+// Write code to remove duplicates from an unsorted linked list.
+// FOLLOW UP
+// How would you solve this problem if a temporary buffer is not allowed?
+
+template <typename T>
+bool remove_duplicates(std::list<T>& list)
+{
+	bool removed = false;
+	size_t size = list.size();
+	if(size < 2)
+		return removed;
+	auto head = list.begin();
+	auto tail = list.end();
+	T target;
+	while (head != tail)
+	{
+		target = *head;
+		++head;
+		for (auto cur = head; cur != tail; ++cur)
+		{
+			if(target == *cur)
+			{
+				removed = true;
+				if(cur == head)
+				{
+					head = cur = list.erase(cur);
+					if(head == tail)
+						break;
+				}
+				else
+					cur = list.erase(cur);
+			}
+		}
+	}
+	return removed;
+}
+
+TEST_F(chapter2_test, 2_1)
+{
+	std::list<int> input;
+	input.push_back(1);
+	input.push_back(2);
+	input.push_back(1);
+	input.push_back(2);
+	EXPECT_EQ(true, remove_duplicates(input));
+	auto it = input.begin();
+	EXPECT_EQ(2, input.size());
+	EXPECT_EQ(1, *it++);
+	EXPECT_EQ(2, *it++);
+
+	input.resize(0);
+	input.push_back(1);
+	EXPECT_EQ(false, remove_duplicates(input));
+	it = input.begin();
+	EXPECT_EQ(1, input.size());
+	EXPECT_EQ(1, *it++);
+
+	input.resize(0);
+	input.push_back(1);
+	input.push_back(2);
+	input.push_back(3);
+	EXPECT_EQ(false, remove_duplicates(input));
+	it = input.begin();
+	EXPECT_EQ(3, input.size());
+	EXPECT_EQ(1, *it++);
+	EXPECT_EQ(2, *it++);
+	EXPECT_EQ(3, *it++);
+
+	input.resize(0);
+	input.push_back(1);
+	input.push_back(2);
+	input.push_back(1);
+	input.push_back(4);
+	input.push_back(2);
+	input.push_back(3);
+	input.push_back(3);
+	EXPECT_EQ(true, remove_duplicates(input));
+	it = input.begin();
+	EXPECT_EQ(4, input.size());
+	EXPECT_EQ(1, *it++);
+	EXPECT_EQ(2, *it++);
+	EXPECT_EQ(4, *it++);
+	EXPECT_EQ(3, *it++);
+}
+
+// Implement an algorithm to find the kth to last element of a singly linked list.
+template <typename T>
+typename std::list<T>::const_iterator find_kth_to_last(const std::list<T>& list, size_t k)
+{
+	// use only ++ operator
+	const size_t n = list.size();
+	if(n == 0 || n < k)
+		return list.cbegin();
+
+	const size_t count = n - k;
+
+	auto it = list.cbegin();
+	for (size_t i = 0; i < count; ++i, ++it);
+	return it;
+}
+TEST_F(chapter2_test, 2_2)
+{
+	std::list<int> input;
+	input.push_back(1);
+	input.push_back(2);
+	input.push_back(3);
+	input.push_back(4);
+	auto it = input.cend();
+	--it;
+	--it;
+	EXPECT_EQ(it, find_kth_to_last(input, 2));
+	it = input.cend();
+	--it;
+	EXPECT_EQ(it, find_kth_to_last(input, 1));
+	it = input.cend();
+	--it;
+	--it;
+	--it;
+	EXPECT_EQ(it, find_kth_to_last(input, 3));
+	it = input.cend();
+	--it;
+	--it;
+	--it;
+	--it;
+	EXPECT_EQ(it, find_kth_to_last(input, 4));
+	// TODO: k == 5 -> ?
+	input.resize(0);
+	input.push_back(1);
+	it = input.cend();
+	--it;
+	EXPECT_EQ(it, find_kth_to_last(input, 1));
+}
+
+// Write code to partition a linked list around a value x, such that all nodes less than
+// x come before all nodes greater than or equal to x.
+template <typename T>
+typename std::list<T>::const_iterator partition_by_x(std::list<T>& list, const T& value)
+{
+	auto x = std::find_if(list.cbegin(), list.cend(), [&value](const T& arg){ return arg == value; });
+	if(x == list.end())
+		return list.begin(); // TODO: exception
+
+	auto less = std::less<T>();
+	auto greater_equal = std::greater_equal<T>();
+
+	auto tail = list.end();
+	auto front = list.begin();
+	auto back = x; ++back;
+
+	while (back != tail)
+	{
+		if(less(*back, *x))
+		{
+			list.insert(x, *back);
+			back = list.erase(back);
+			continue;
+		}
+		if(back != tail)
+			back++;
+	}
+
+	while (front != x)
+	{
+		if(greater_equal(*front, *x))
+		{
+			list.push_back(*front);
+			front = list.erase(front);
+			continue;
+		}
+		if(front != tail)
+			front++;
+	}
+	return list.cbegin();
+}
+
+#include <xfunctional>
+TEST_F(chapter2_test, 2_4)
+{
+	auto less = std::less<int>();
+	auto greater_equal = std::greater_equal<int>();
+
+	std::list<int> input;
+	input.push_back(10);
+	input.push_back(2);
+	input.push_back(5);
+	input.push_back(1);
+	input.push_back(6);
+	auto output = partition_by_x(input, 5);
+	
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, *output == 5); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+
+	input.resize(0);
+	input.push_back(5);
+	input.push_back(1);
+	input.push_back(2);
+	input.push_back(3);
+	output = partition_by_x(input, 5);
+
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, *output == 5); output++;
+
+	input.resize(0);
+	input.push_back(10);
+	input.push_back(9);
+	input.push_back(8);
+	input.push_back(5);
+	output = partition_by_x(input, 5);
+
+	EXPECT_EQ(true, *output == 5); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	
+	input.resize(0);
+	input.push_back(10);
+	input.push_back(5);
+	input.push_back(2);
+	input.push_back(5);
+	input.push_back(6);
+	output = partition_by_x(input, 5);
+
+	EXPECT_EQ(true, less(*output, 5)); output++;
+	EXPECT_EQ(true, *output == 5); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+	EXPECT_EQ(true, greater_equal(*output, 5)); output++;
+
+	input.resize(0);
+	input.push_back(5);
+	output = partition_by_x(input, 5);
+	EXPECT_EQ(true, *output == 5); output++;
+
+	input.resize(0);
+	input.push_back(1);
+	output = partition_by_x(input, 5);
+	EXPECT_EQ(true, *output == 1); output++;
+
+	input.resize(0);
+	output = partition_by_x(input, 5);
+	EXPECT_EQ(input.end(), output);
+}
+
+//Given a circular linked list, implement an algorithm which returns the node at
+//	the beginning of the loop.
+//	DEFINITION
+//	Circular linked list: A (corrupt) linked list in which a node's next pointer points
+//	to an earlier node, so as to make a loop in the linked list.
+//	EXAMPLE
+//Input: A - > B - > C - > D - > E - > C [the same C as earlier]
+//Output: C
+
+typedef slist<int>::node node;
+node* find_beginning_of_the_loop(const slist<int>& list)
+{
+	size_t size = list.size();
+	return list.get(size);
+}
+
+TEST_F(chapter2_test, 2_6)
+{
+	slist<int> list;
+	list.push_back(1);
+	list.push_back(2);
+	list.push_back(3);
+	list.make_circular(list.get(1), list.get(2)); // 1 -> 2-> 3-> 2
+	
+	EXPECT_EQ(2,find_beginning_of_the_loop(list)->get());
+}
+
 
 int main(int argc, char* argv[])
 {
